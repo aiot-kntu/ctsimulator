@@ -23,6 +23,12 @@ architecture* from that of the *protocol*:
 | **2PC**   | unanimity           | `2pc_pipeline`   | `2pc_ce`   |
 | **TOM**   | none (pure ordering)| `tom_pipeline`   | `tom_ce`   |
 
+A seventh protocol, `unanimous_pipeline`, replicates the firmware of the
+nRF52840 / BlueFlood testbed (no abort, request-and-replay recovery, fixed
+four-slot rounds, per-board flood loss) for direct comparison with hardware
+logs; see [`docs/protocols/unanimous_ci.md`](docs/protocols/unanimous_ci.md)
+and `profiles/hardware/`.
+
 The simulator is deterministic for a fixed seed and records a three-state radio
 schedule (Listen / Flood / Sleep) per node per slot, from which latency,
 throughput, commit rate, and energy (awake slots) are derived.

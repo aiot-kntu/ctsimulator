@@ -32,6 +32,30 @@ pub struct SimConfig {
     /// Disable all prints during simulation (useful for sweep).
     #[serde(default)]
     pub quiet: bool,
+    /// Hardware-replica parameters (optional). Used by `unanimous_pipeline`;
+    /// `node_flood_loss` is also honoured by every CI pipeline. When absent,
+    /// behaviour and RNG draw sequence are unchanged.
+    #[serde(default)]
+    pub hw: Option<HwConfig>,
+}
+
+/// Parameters that mirror the nRF52840 / BlueFlood firmware.
+#[derive(Debug, Clone, Deserialize, Default)]
+pub struct HwConfig {
+    /// Acknowledgement window W in rounds. A proposal still uncommitted at some
+    /// node after W rounds halts the protocol. Must satisfy W >= 2N.
+    #[serde(default)]
+    pub ack_window: Option<u64>,
+    /// Replays per recovery cycle. `None` -> N - 1 (8- and 12-node firmware).
+    #[serde(default)]
+    pub max_replays: Option<usize>,
+    /// Per-node probability of missing a whole flood (node is deaf for the
+    /// round). Length must equal N. The round initiator is never deaf.
+    #[serde(default)]
+    pub node_flood_loss: Option<Vec<f64>>,
+    /// Optional path for the per-node decision trace CSV.
+    #[serde(default)]
+    pub trace_csv: Option<String>,
 }
 
 #[derive(Debug, Clone, Deserialize)]

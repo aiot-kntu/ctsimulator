@@ -9,6 +9,7 @@ pub mod pipeline;
 pub mod pure_flood;
 pub mod tom_pipeline;
 pub mod two_pc_pipeline;
+pub mod unanimous_pipeline;
 
 use crate::config::SimConfig;
 use crate::metrics::MetricsCollector;

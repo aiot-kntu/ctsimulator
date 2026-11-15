@@ -1,0 +1,20 @@
+# Eight-node build without loss: commit in exactly N rounds, one decision per round.
+seed = 1
+phy_mode = "ci"
+protocol = "unanimous_pipeline"
+num_proposals = 200
+snapshot_interval = 100000000
+max_slots = 100000000
+
+[network]
+num_nodes = 8
+topology = "full_mesh"   # the testbed was a single radio cell
+loss_rate = 0.0
+
+[ci]
+flood_repeats = 3        # BlueFlood: initiator in slot 0, relays until slot 3
+round_slots = 4
+
+[hw]
+ack_window = 16
+trace_csv = "results/trace_n8_lossless.csv"

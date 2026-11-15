@@ -1,0 +1,22 @@
+# Redeployed twelve-node run with its measured per-board flood loss.
+seed = 1
+phy_mode = "ci"
+protocol = "unanimous_pipeline"
+num_proposals = 9504
+snapshot_interval = 100000000
+max_slots = 100000000
+
+[network]
+num_nodes = 12
+topology = "full_mesh"   # the testbed was a single radio cell
+loss_rate = 0.0
+
+[ci]
+flood_repeats = 3        # BlueFlood: initiator in slot 0, relays until slot 3
+round_slots = 4
+
+[hw]
+ack_window = 32
+# Per-board whole-flood loss (index i = board N(i+1)), measured in the run.
+node_flood_loss = [0.000207, 0.000000, 0.000000, 0.000621, 0.000103, 0.000310, 0.000000, 0.000000, 0.000000, 0.000000, 0.000207, 0.000000]
+trace_csv = "results/trace_n12_measured_loss.csv"

@@ -23,6 +23,9 @@ pub struct CiPipelineCore {
     pub current_slot: u64,
     pub next_snapshot: u64,
     pub round_num: u64,
+    /// Per-round whole-flood loss mask (see `HwConfig::node_flood_loss`).
+    /// Empty when the option is unset.
+    pub deaf: Vec<bool>,
 }
 
 impl CiPipelineCore {
@@ -38,6 +41,7 @@ impl CiPipelineCore {
             current_slot: 0,
             next_snapshot: 0,
             round_num: 0,
+            deaf: Vec::new(),
         }
     }
 
@@ -75,6 +79,8 @@ impl CiPipelineCore {
             round_slots,
         };
 
+        self.draw_deaf_mask(initiator);
+
         self.current_slot = ci::flood_identical_round(
             self.current_slot,
             initiator,
@@ -86,7 +92,31 @@ impl CiPipelineCore {
             &mut self.metrics,
             &mut self.next_snapshot,
             snap,
+            &self.deaf,
         );
+    }
+
+    /// Draw this round's whole-flood loss mask from `hw.node_flood_loss`.
+    /// Draws nothing when the option is unset.
+    fn draw_deaf_mask(&mut self, initiator: NodeId) {
+        use rand::Rng;
+        let Some(q) = self
+            .config
+            .hw
+            .as_ref()
+            .and_then(|h| h.node_flood_loss.clone())
+        else {
+            return;
+        };
+        let n = self.num_nodes();
+        assert_eq!(
+            q.len(),
+            n,
+            "hw.node_flood_loss must have one entry per node"
+        );
+        self.deaf = (0..n)
+            .map(|i| i != initiator && q[i] > 0.0 && self.rng.gen::<f64>() < q[i])
+            .collect();
     }
 
     /// True if node finished the flood (participated) or is the initiator.
@@ -221,6 +251,7 @@ mod tests {
                 max_slots: 1000,
                 abort_probability: 0.0,
                 quiet,
+                hw: None,
             };
             let graph = NetworkGraph::full_mesh(3);
             let core = CiPipelineCore::new(config, graph);
