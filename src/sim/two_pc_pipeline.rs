@@ -346,6 +346,7 @@ mod tests {
             max_slots: 100_000,
             abort_probability: 0.0,
             quiet: true,
+            hw: None,
         };
         CiPipelineCore::new(config, NetworkGraph::full_mesh(n))
     }

@@ -539,6 +539,7 @@ fn pure_flood_reaches_every_receiver_on_a_lossless_line() {
         max_slots: 100_000,
         abort_probability: 0.0,
         quiet: true,
+        hw: None,
     };
 
     let graph = NetworkGraph::line(num_nodes);

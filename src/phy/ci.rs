@@ -37,6 +37,7 @@ pub fn flood_identical_round(
     metrics: &mut MetricsCollector,
     next_snapshot: &mut u64,
     snapshot_interval: u64,
+    deaf: &[bool],
 ) -> Slot {
     let round_slots = ci_cfg.round_slots.unwrap_or_else(|| {
         std::cmp::max(
@@ -83,6 +84,12 @@ pub fn flood_identical_round(
                     // draw sequence is identical to the pre-patch engine.
                     if nodes[nbr].state == NodeState::Listen {
                         metrics.rx_attempts += 1;
+                        // A deaf node (whole-flood loss, `hw.node_flood_loss`) hears
+                        // nothing this round. No RNG draw, so an all-false or empty
+                        // mask leaves the draw sequence untouched.
+                        if deaf.get(nbr).copied().unwrap_or(false) {
+                            continue;
+                        }
                         if loss_rate == 0.0 || rng.gen::<f64>() >= loss_rate {
                             metrics.rx_success += 1;
                             received_this_slot[nbr] = true;

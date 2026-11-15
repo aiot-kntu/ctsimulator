@@ -58,6 +58,10 @@ fn main() {
         "paxos_pipeline" => ("results/results_paxos.csv", "results/snapshots_paxos.csv"),
         "2pc_pipeline" => ("results/results_2pc.csv", "results/snapshots_2pc.csv"),
         "tom_pipeline" => ("results/results_tom.csv", "results/snapshots_tom.csv"),
+        "unanimous_pipeline" => (
+            "results/results_unanimous.csv",
+            "results/snapshots_unanimous.csv",
+        ),
         "paxos_ce" => ("results/results_paxos_ce.csv", "results/snapshots_paxos_ce.csv"),
         "2pc_ce" => ("results/results_2pc_ce.csv", "results/snapshots_2pc_ce.csv"),
         "tom_ce" => ("results/results_tom_ce.csv", "results/snapshots_tom_ce.csv"),
@@ -67,7 +71,7 @@ fn main() {
             return;
         }
         other => panic!(
-            "Unknown protocol: {other}. Available: paxos_pipeline, 2pc_pipeline, tom_pipeline, paxos_ce, 2pc_ce, tom_ce, pure_flood"
+            "Unknown protocol: {other}. Available: paxos_pipeline, 2pc_pipeline, tom_pipeline, unanimous_pipeline, paxos_ce, 2pc_ce, tom_ce, pure_flood"
         ),
     };
 

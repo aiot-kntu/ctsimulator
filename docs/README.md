@@ -19,6 +19,9 @@ the page is a bug.
 | **2PC** | [2pc_ci.md](protocols/2pc_ci.md) (`2pc_pipeline`) | [2pc_ce.md](protocols/2pc_ce.md) (`2pc_ce`) |
 | **TOM** | [tom_ci.md](protocols/tom_ci.md) (`tom_pipeline`) | [tom_ce.md](protocols/tom_ce.md) (`tom_ce`) |
 
+Hardware replica: [unanimous_ci.md](protocols/unanimous_ci.md) (`unanimous_pipeline`), the
+pipelined unanimous agreement of the nRF52840 testbed, with profiles in `profiles/hardware/`.
+
 ## Quick run
 
 ```bash

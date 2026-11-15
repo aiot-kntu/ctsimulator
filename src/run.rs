@@ -166,6 +166,11 @@ pub fn run_experiment_on_graph(config: SimConfig, graph: NetworkGraph) -> RunRes
             let (m, l, f, s) = sim.run();
             (m, l, f, s)
         }
+        "unanimous_pipeline" => {
+            let mut sim =
+                crate::sim::unanimous_pipeline::UnanimousPipelineSim::new(config.clone(), graph);
+            sim.run()
+        }
         "tom_pipeline" => {
             let mut sim = TomPipelineSim::new(config.clone(), graph);
             let (m, l, f, s) = sim.run();
@@ -202,7 +207,7 @@ pub fn run_experiment_on_graph(config: SimConfig, graph: NetworkGraph) -> RunRes
             (sim.metrics, l, f, s)
         }
         other => panic!(
-            "Unknown protocol: {other}. Available: paxos_pipeline, 2pc_pipeline, tom_pipeline, paxos_ce, 2pc_ce, tom_ce"
+            "Unknown protocol: {other}. Available: paxos_pipeline, 2pc_pipeline, tom_pipeline, unanimous_pipeline, paxos_ce, 2pc_ce, tom_ce"
         ),
     };
 
@@ -266,6 +271,7 @@ pub fn make_sim_config(
         max_slots,
         abort_probability,
         quiet: true,
+        hw: None,
     }
 }
 
