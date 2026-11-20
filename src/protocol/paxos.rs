@@ -468,7 +468,10 @@ mod tests {
         // Piggyback recovery delivers term 2; the next marker commits it.
         st.adopt_proposal(2, b"tx2".to_vec(), n, 0);
         st.commit_up_to(4);
-        assert!(st.log.iter().any(|(t, _)| *t == 2), "recovered term 2 is committed");
+        assert!(
+            st.log.iter().any(|(t, _)| *t == 2),
+            "recovered term 2 is committed"
+        );
         assert_eq!(st.detect_gap(5), None, "no holes remain");
     }
 
