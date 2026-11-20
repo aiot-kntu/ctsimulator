@@ -381,9 +381,13 @@ impl NodeTwoPcState {
         self.log.push((tx_id, state));
     }
 
+    /// Lowest missing tx in `1..current_tx` (absent from both log and pending).
+    ///
+    /// Tx 0 is skipped because `nack_tx_id == 0` is the wire-level "no NACK"
+    /// sentinel: a gap at 0 could never be requested, and returning it would
+    /// mask every higher, requestable gap for the rest of the run.
     pub fn detect_gap(&self, current_tx: u64) -> Option<u64> {
-        // Find the lowest missing TX from 0 to current_tx
-        for t in 0..current_tx {
+        for t in 1..current_tx {
             let in_log = self.log.iter().any(|(lt, _)| *lt == t);
             let in_pending = self.pending.iter().any(|p| p.tx_id == t);
             if !in_log && !in_pending {
@@ -550,6 +554,24 @@ mod tests {
         assert_eq!(p.votes[2], Vote::No, "deferred NO must be reconciled");
         assert_eq!(p.votes[0], Vote::Yes, "adopting node's own vote present");
         assert!(st.deferred_votes.is_empty());
+    }
+
+    /// `nack_tx_id == 0` means "no NACK" on the wire. A node that missed tx 0
+    /// must still report its higher, requestable gaps; returning 0 would turn
+    /// every later NACK into "no NACK" for the rest of the run.
+    #[test]
+    fn two_pc_missing_tx_zero_does_not_mask_higher_gaps() {
+        let n = 4;
+        let mut st = NodeTwoPcState::new(n);
+        // Tx 0 and tx 3 are missing; 1, 2, 4 are known.
+        for t in [1u64, 2, 4] {
+            st.adopt_tx(t, format!("tx{t}").into_bytes(), Vote::Yes, 0, 0);
+        }
+        assert_eq!(st.detect_gap(5), Some(3), "tx 3 must be requestable");
+
+        // Once tx 3 is recovered, no requestable gap remains.
+        st.adopt_tx(3, b"tx3".to_vec(), Vote::Yes, 0, 0);
+        assert_eq!(st.detect_gap(5), None);
     }
 
     #[test]

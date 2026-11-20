@@ -234,9 +234,20 @@ impl NodePaxosState {
     }
 
     /// Detect gap: first term missing from both log and pending.
+    ///
+    /// The scan deliberately ignores `last_accepted`. A commit marker can move
+    /// past a term whose proposal data this node never received (`commit_term`
+    /// advances `last_accepted` even when there is nothing to move into the
+    /// log), so starting at `last_accepted + 1` would hide that hole forever and
+    /// it would never be NACKed. Scanning from the bottom keeps such holes
+    /// recoverable; once recovered data is adopted into `pending`, the next
+    /// commit marker moves it into the log.
+    ///
+    /// Term 0 is skipped because `nack_term == 0` is the wire-level "no NACK"
+    /// sentinel: a detected gap at 0 could not be requested and would only mask
+    /// higher, requestable gaps.
     pub fn detect_gap(&self, up_to_term: u64) -> Option<u64> {
-        let start = self.last_accepted.map(|t| t + 1).unwrap_or(0);
-        for t in start..up_to_term {
+        for t in 1..up_to_term {
             let in_log = self.log.iter().any(|(lt, _)| *lt == t);
             let in_pending = self.pending.iter().any(|p| p.term == t);
             if !in_log && !in_pending {
@@ -429,6 +440,51 @@ mod tests {
             st.deferred_votes.is_empty(),
             "deferred vote drained on adopt"
         );
+    }
+
+    /// A lagging node that never received term 2's proposal learns a commit
+    /// marker of 4. The marker advances `last_accepted` past the hole, but the
+    /// hole must still be detected (so it gets NACKed), and once the data is
+    /// recovered the next marker must move it into the log.
+    #[test]
+    fn paxos_gap_below_commit_marker_is_detected_and_recovered() {
+        let n = 5;
+        let mut st = NodePaxosState::new();
+        for t in [0u64, 1, 3, 4] {
+            st.adopt_proposal(t, format!("tx{t}").into_bytes(), n, 0);
+        }
+        st.commit_up_to(4);
+        assert_eq!(st.last_accepted, Some(4));
+        assert!(
+            !st.log.iter().any(|(t, _)| *t == 2),
+            "no data for term 2 must be fabricated by the marker"
+        );
+        assert_eq!(
+            st.detect_gap(5),
+            Some(2),
+            "a hole below the commit marker must still be NACKed"
+        );
+
+        // Piggyback recovery delivers term 2; the next marker commits it.
+        st.adopt_proposal(2, b"tx2".to_vec(), n, 0);
+        st.commit_up_to(4);
+        assert!(
+            st.log.iter().any(|(t, _)| *t == 2),
+            "recovered term 2 is committed"
+        );
+        assert_eq!(st.detect_gap(5), None, "no holes remain");
+    }
+
+    /// `nack_term == 0` means "no NACK" on the wire, so a hole at term 0 must not
+    /// be returned: it could never be requested and would mask higher holes.
+    #[test]
+    fn paxos_gap_scan_skips_unrequestable_term_zero() {
+        let n = 5;
+        let mut st = NodePaxosState::new();
+        for t in [1u64, 2, 4] {
+            st.adopt_proposal(t, format!("tx{t}").into_bytes(), n, 0);
+        }
+        assert_eq!(st.detect_gap(5), Some(3));
     }
 
     #[test]
